@@ -3,129 +3,411 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Estimated revenue — Mock</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Estimated revenue — Mock (Screenshot)</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <style>
-  body {
-    margin:0; background:#0b0b0c; color:#e9eef2;
-    font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial;
+  :root{
+    --bg:#0b0b0c;
+    --panel:#0f0f10;
+    --muted:#9aa0a6;
+    --text:#ffffff;
+    --accent:#5ec2ff;
+    --chip:#1b1b1d;
+    --chipActive:#ffffff;
+    --chipActiveText:#0b0b0c;
+    --divider: rgba(255,255,255,0.04);
+    --danger:#ef4444;
   }
-  h1{margin:0;font-size:24px;padding:16px}
-  .filters{display:flex;gap:8px;padding:0 12px}
-  .btn{
-    padding:6px 10px;border-radius:6px;
-    background:#1c1d20;color:#fff;cursor:pointer;font-size:14px;
-    border:none;
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text","Segoe UI", Roboto, Helvetica, Arial;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
   }
-  .btn.active{background:#2a2c31}
-  .chart-container{height:280px;margin:12px}
-  .list{
-    margin:16px 12px;display:flex;
-    justify-content:space-between;font-weight:bold
+
+  /* Top bar */
+  .bar{
+    display:flex; align-items:center; gap:.75rem; padding:18px 16px 6px;
+    border-bottom:1px solid var(--divider);
   }
-  [contenteditable="true"]:focus{text-decoration:underline;outline:none}
+  .back{
+    width:36px; height:36px; display:grid; place-items:center;
+    border-radius:8px; cursor:pointer;
+  }
+  .back svg{ width:20px; height:20px; color:var(--text) }
+  h1{font-size:32px; margin:0; font-weight:800; letter-spacing:.3px}
+
+  /* Filters row */
+  .filters{
+    display:flex; align-items:center; gap:10px; padding:12px;
+    overflow-x:auto;
+  }
+  .chip{
+    padding:10px 14px; border-radius:12px; background:var(--chip);
+    color:var(--text); font-weight:700; font-size:14px; border:1px solid var(--divider);
+    cursor:pointer; flex:0 0 auto;
+  }
+  .chip.active{
+    background:var(--chipActive); color:var(--chipActiveText);
+    box-shadow:0 1px 0 rgba(0,0,0,0.25) inset;
+  }
+  .filters .spacer { width:8px; display:inline-block }
+
+  /* Chart card */
+  .card{
+    margin:8px 12px; padding:8px 8px 12px; border-radius:14px; background:var(--panel);
+    border:1px solid var(--divider);
+  }
+  .chart-wrap{ position:relative; height:300px; padding:8px 4px 0; }
+
+  /* small y-axis label style (we will rely on Chart.js ticks for text) */
+  .legend-row{
+    margin:18px 12px 0; padding:16px; border-top:1px solid var(--divider);
+    display:flex; align-items:center; gap:12px;
+  }
+  .dot{ width:10px; height:10px; border-radius:50%; background:var(--accent) }
+  .row{ display:flex; align-items:center; justify-content:space-between; width:100% }
+  .title{ font-weight:800; font-size:18px }
+  .money{
+    font-weight:800; font-size:18px; font-variant-numeric:tabular-nums;
+  }
+  [contenteditable=true]{ outline:none; }
+  [contenteditable=true]:focus{ text-decoration:underline; }
+
+  /* Bottom nav - fixed */
+  .nav{
+    position:fixed; left:0; right:0; bottom:0; height:72px; background:var(--panel);
+    border-top:1px solid var(--divider); display:flex; align-items:center; justify-content:space-around;
+  }
+  .tab{ display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; color:var(--muted); text-decoration:none; }
+  .tab svg{ width:22px; height:22px }
+  .tab.active{ color:var(--danger) }
+
+  /* safe padding at bottom like iOS home indicator */
+  .safe-bottom{ height:94px }
+
+  /* misc */
+  ::-webkit-scrollbar{ height:8px }
+  ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.03); border-radius:8px }
+  @media (min-width:900px){
+    body{ font-size:16px }
+    h1{ font-size:36px }
+  }
 </style>
 </head>
 <body>
 
-<h1>Estimated revenue</h1>
+  <!-- Top -->
+  <div class="bar">
+    <div class="back" title="Back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1>Estimated revenue</h1>
+  </div>
 
-<!-- Filter buttons -->
-<div class="filters" id="rangeFilters">
-  <button class="btn" data-range="7">7D</button>
-  <button class="btn" data-range="28">28D</button>
-  <button class="btn" data-range="90">90D</button>
-  <button class="btn active" data-range="365">365D</button>
-</div>
+  <!-- Filter / range chips -->
+  <div class="filters" id="rangeFilters">
+    <button class="chip" data-range="7">7D</button>
+    <button class="chip" data-range="28">28D</button>
+    <button class="chip" data-range="90">90D</button>
+    <button class="chip" data-range="365">365D</button>
+    <div style="width:10px;border-left:1px solid var(--divider);height:36px;margin-left:8px"></div>
+    <!-- month chips (auto-generated) -->
+    <div id="monthChips" style="display:flex;gap:10px;margin-left:8px"></div>
+  </div>
 
-<!-- Chart -->
-<div class="chart-container">
-  <canvas id="revChart"></canvas>
-</div>
+  <!-- Chart -->
+  <div class="card">
+    <div class="chart-wrap">
+      <canvas id="revChart" role="img" aria-label="Estimated revenue chart"></canvas>
+    </div>
+  </div>
 
-<!-- Revenue total -->
-<div class="list">
-  <span>Estimated revenue</span>
-  <span id="totalRevenue" contenteditable="true" data-money>$97.74</span>
-</div>
+  <!-- legend / list row -->
+  <div class="legend-row">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="dot"></div>
+      <div class="title">Estimated revenue</div>
+    </div>
+    <div class="money" id="totalRevenue" contenteditable="true" spellcheck="false" data-money>$97.74</div>
+  </div>
+
+  <div class="safe-bottom"></div>
+
+  <!-- bottom nav -->
+  <nav class="nav" role="navigation" aria-label="Bottom">
+    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M3 11h18M3 21h18M3 3h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Dashboard</span></a>
+    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4zM10 9l6 3-6 3V9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Content</span></a>
+    <a class="tab active" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V6m8 12V6m8 12V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Analytics</span></a>
+    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 01-4 4h-4l-4 3v-3H7a4 4 0 01-4-4V6a4 4 0 014-4h10a4 4 0 014 4v9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Comments</span></a>
+    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12M6 6h12M6 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Earn</span></a>
+  </nav>
 
 <script>
-/* ---------- Helpers ---------- */
-const fmtMoney = n => `${n<0?'-':''}$${Math.abs(n).toFixed(2)}`;
-const parseMoney = s => +String(s).replace(/[^\d.-]/g,'') || 0;
-
-/* ---------- Build random data ---------- */
-function randomSeries(len){
-  let arr=[],y=0;
-  for(let i=0;i<len;i++){
-    y += (Math.random()*2-1)*3; // random walk
-    arr.push(+y.toFixed(2));
-  }
-  return arr;
+/* -----------------------
+   Utilities & formatting
+   ----------------------- */
+function fmtMoney(n){
+  const sign = n < 0 ? '-' : '';
+  return `${sign}$${Math.abs(Number(n)).toFixed(2)}`;
 }
+function parseMoney(s){
+  const n = Number(String(s).replace(/[^\d.-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+function shortMonthName(date){
+  return date.toLocaleString(undefined,{month:'short'});
+}
+function formatTooltipDate(date){
+  // e.g., Jan 18, 2024
+  return date.toLocaleString(undefined,{month:'short', day:'numeric', year:'numeric'});
+}
+
+/* -----------------------
+   Month chips (auto-update)
+   show current month and previous 5 months, like screenshot scroll
+   ----------------------- */
+(function renderMonthChips(){
+  const container = document.getElementById('monthChips');
+  container.innerHTML = '';
+  const now = new Date();
+  // show current and previous 5 months (so it always updates monthly)
+  for(let i=0;i<6;i++){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = shortMonthName(d);
+    btn.dataset.month = d.getMonth();
+    btn.dataset.year = d.getFullYear();
+    container.appendChild(btn);
+  }
+})();
+
+/* -----------------------
+   Range & chart setup
+   - default range set to 28 to match screenshot "28D" active
+   - Y axis fixed: min -18.80, 0, 9.40 tick spacing
+   ----------------------- */
+let currentRange = 28; // match screenshot: 28D selected by default
+const AXIS_MAX = 9.40;
+const AXIS_MIN = -18.80;
+const AXIS_STEP = 9.40;
+
+/* Build an array of Date objects for labels (n days ending today) */
 function buildDates(n){
-  const out=[],today=new Date();
-  for(let i=n-1;i>=0;i--){
-    let d=new Date(today); d.setDate(today.getDate()-i);
-    out.push(d.toLocaleDateString());
+  const out = [];
+  const today = new Date();
+  for(let i = n-1; i >= 0; i--){
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    out.push(d);
   }
   return out;
 }
 
-/* ---------- Init Chart ---------- */
-let currentRange=365;
-const ctx=document.getElementById('revChart');
-let chart=new Chart(ctx,{
-  type:'line',
-  data:{
-    labels:buildDates(currentRange),
-    datasets:[{
-      data:randomSeries(currentRange),
-      borderColor:'#5ec2ff',
-      tension:0.3,
-      borderWidth:2,
-      pointRadius:0
+/* Create random-ish series that sometimes goes negative and sometimes has a dip like screenshot */
+function randomSeries(len){
+  const out = [];
+  let base = Math.random()*3; // starting offset
+  for(let i=0;i<len;i++){
+    // smooth changes + occasional spikes/dips
+    const jitter = (Math.random()-0.5) * 2.4; // smooth jitter
+    const shock = Math.random() < 0.06 ? (Math.random()*12 - 6) : 0; // occasional shock +/- up to ~6-6
+    base = base + jitter*0.4 + shock*0.2;
+    // occasionally force a pronounced negative value like screenshot
+    if(Math.random() < 0.03) base = - (5 + Math.random()*12);
+    // clamp to axis to keep consistent look
+    const v = Math.max(AXIS_MIN, Math.min(AXIS_MAX, Number(base.toFixed(2))));
+    out.push(v);
+  }
+  // sometimes drop last value to near 0 to match screenshot final drop
+  if(Math.random() < 0.5) out[out.length-1] = Math.random() < 0.6 ? 0 : out[out.length-1];
+  return out;
+}
+
+/* -----------------------
+   Initialize Chart.js
+   ----------------------- */
+const ctx = document.getElementById('revChart').getContext('2d');
+let dataset = {
+  labels: buildDates(currentRange),
+  data: randomSeries(currentRange)
+};
+
+const revChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: dataset.labels,
+    datasets: [{
+      label: 'Estimated revenue',
+      data: dataset.data,
+      borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5ec2ff',
+      borderWidth: 2.5,
+      tension: 0.3,
+      pointRadius: 3,
+      pointBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5ec2ff',
+      fill: false,
+      segment: {
+        // keep line the same color along
+      }
     }]
   },
-  options:{
-    responsive:true,
-    plugins:{
-      legend:{display:false},
-      tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.parsed.y)}}
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'nearest', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        displayColors: false,
+        callbacks: {
+          title: (items) => {
+            // items[0].dataIndex -> date in labels (Date object)
+            const idx = items[0].dataIndex;
+            const d = revChart.data.labels[idx];
+            if(d instanceof Date) return formatTooltipDate(d);
+            // fallback if label is string
+            return d;
+          },
+          label: (ctx) => {
+            const val = ctx.parsed.y;
+            // mimic "Jan 18, 2024: -$9.52" inside tooltip body by returning just "-$9.52" (tooltip title already has date)
+            // Chart.js displays title on top + label below; to match screenshot we will return "-$9.52"
+            return fmtMoney(val);
+          }
+        },
+        backgroundColor: '#111', // dark tooltip
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        padding: 8,
+        cornerRadius: 6
+      }
     },
-    scales:{
-      y:{ticks:{callback:v=>fmtMoney(v)}}
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.03)', drawBorder:false },
+        ticks: {
+          color: getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#9aa0a6',
+          callback: function(value, index, ticks){
+            // show month labels similar to screenshot: show abbreviated month on first and last, occasional day labels
+            const d = this.getLabelForValue(value);
+            if(!(d instanceof Date)) return d;
+            const day = d.getDate();
+            const mon = d.toLocaleString(undefined,{month:'short'});
+            if(day === 1 || index === 0 || index === ticks.length-1) return mon;
+            // for medium ranges like 28D show day at a couple ticks
+            if(currentRange <= 60 && index % Math.max(1,Math.floor(ticks.length/4)) === 0) return mon + ' ' + String(day).padStart(2,'0');
+            return '';
+          }
+        }
+      },
+      y: {
+        min: AXIS_MIN,
+        max: AXIS_MAX,
+        ticks: {
+          color: getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#9aa0a6',
+          stepSize: AXIS_STEP,
+          callback: (v) => {
+            // show $9.40, $0, -$9.40 etc - format exactly two decimals
+            return fmtMoney(v);
+          }
+        },
+        grid: { color: 'rgba(255,255,255,0.03)', drawBorder:false }
+      }
+    },
+    elements: {
+      point: { radius: 0 } // hide points by default like screenshot, but we leave pointRadius in dataset for hover
     }
   }
 });
 
-/* ---------- Randomize on click ---------- */
-ctx.onclick=()=>{
-  chart.data.labels=buildDates(currentRange);
-  chart.data.datasets[0].data=randomSeries(currentRange);
-  chart.update();
-};
-
-/* ---------- Switch range ---------- */
-document.getElementById('rangeFilters').addEventListener('click',e=>{
-  const b=e.target.closest('button[data-range]');
-  if(!b) return;
-  document.querySelectorAll('.btn').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  currentRange=+b.dataset.range;
-  chart.data.labels=buildDates(currentRange);
-  chart.data.datasets[0].data=randomSeries(currentRange);
-  chart.update();
+/* -----------------------
+   Interactions
+   - clicking the canvas randomizes the dataset
+   ----------------------- */
+document.getElementById('revChart').addEventListener('click', () => {
+  chartRandomize();
 });
 
-/* ---------- Editable money field ---------- */
-document.querySelectorAll('[data-money]').forEach(el=>{
-  el.addEventListener('focus',()=>{el.textContent=parseMoney(el.textContent)});
-  el.addEventListener('blur',()=>{el.textContent=fmtMoney(parseMoney(el.textContent))});
-  el.addEventListener('keydown',ev=>{
-    if(ev.key==='Enter'){ev.preventDefault();el.blur();}
+/* Range buttons (7D/28D/90D/365D) - init with 28D active like screenshot */
+document.getElementById('rangeFilters').addEventListener('click', (e) => {
+  const btn = e.target.closest('button.chip');
+  if(!btn) return;
+  // if month chip clicked (has data-month) ignore here
+  if(btn.dataset.month !== undefined) {
+    // toggling month chips: highlight selected month visually (single select)
+    document.querySelectorAll('#monthChips .chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    return;
+  }
+  // range chip clicked
+  document.querySelectorAll('#rangeFilters > button.chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentRange = Number(btn.dataset.range);
+  updateChartForRange(currentRange);
+});
+
+/* set initial active range & one month chip active (current month) */
+(function initialActive(){
+  // set 28D active: find chip with data-range=28
+  const chips = document.querySelectorAll('#rangeFilters > button.chip[data-range]');
+  chips.forEach(c => c.classList.remove('active'));
+  const activeBtn = document.querySelector('#rangeFilters > button.chip[data-range="28"]');
+  if(activeBtn) activeBtn.classList.add('active');
+
+  // set first month chip active (current month)
+  const mchip = document.querySelector('#monthChips .chip');
+  if(mchip) mchip.classList.add('active');
+
+  // initial chart already created with currentRange=28
+})();
+
+/* Randomize/chart update function */
+function chartRandomize(){
+  const labels = buildDates(currentRange);
+  const data = randomSeries(currentRange);
+  revChart.data.labels = labels;
+  revChart.data.datasets[0].data = data;
+  revChart.update();
+}
+
+/* Helper when range changes */
+function updateChartForRange(range){
+  const labels = buildDates(range);
+  const data = randomSeries(range);
+  revChart.data.labels = labels;
+  revChart.data.datasets[0].data = data;
+  revChart.update();
+}
+
+/* initial draw (already drawn by Chart.js constructor). ensure formatting of money field */
+document.querySelectorAll('[data-money]').forEach(el => {
+  // format initial
+  el.textContent = fmtMoney(parseMoney(el.textContent || '0'));
+  // editing behavior
+  el.addEventListener('focus', () => {
+    el.textContent = String(parseMoney(el.textContent || '0'));
+    // select all text for convenience
+    document.execCommand('selectAll', false, null);
+  });
+  el.addEventListener('blur', () => {
+    el.textContent = fmtMoney(parseMoney(el.textContent || '0'));
+  });
+  el.addEventListener('keydown', (ev) => {
+    if(ev.key === 'Enter'){ ev.preventDefault(); el.blur(); }
   });
 });
+
+/* Also make any .money elements modifiable just by adding data-money */
+function makeAllMoneyEditable(){
+  // future expansion: if more money fields are added dynamically.
+}
+makeAllMoneyEditable();
+
 </script>
 </body>
 </html>
