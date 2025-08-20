@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Estimated revenue — Mock</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg:#0d0d0d;        /* page background */
+    --panel:#121212;     /* cards/panels */
+    --muted:#9aa0a6;     /* muted text */
+    --text:#e9eef2;      /* primary text */
+    --accent:#5ec2ff;    /* chart line dot + chip dot */
+    --chip:#1e1f22;      /* chips bg */
+    --chipActive:#2a2c31;
+    --danger:#ef4444;    /* analytics active pill */
+    --divider:#232427;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+                 Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* top app bar */
+  .bar{
+    display:flex; align-items:center; gap:.75rem;
+    padding:18px 16px 8px;
+  }
+  .back{
+    width:24px; height:24px; border-radius:8px;
+    display:grid; place-items:center; color:var(--text);
+  }
+  .back svg{width:20px;height:20px}
+  h1{
+    font-size:28px; font-weight:700; letter-spacing:.2px; margin:0;
+  }
+
+  /* filter row */
+  .filters{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px 0 12px; flex-wrap:wrap;
+  }
+  .btn{
+    padding:10px 14px; border-radius:12px; border:1px solid var(--divider);
+    background:var(--chip); color:var(--text);
+    font-size:14px; font-weight:600; letter-spacing:.25px;
+    cursor:pointer; user-select:none;
+  }
+  .btn.active{ background:var(--chipActive); }
+  .spacer{ flex:1 }
+  .month-chip{ min-width:64px; text-align:center }
+
+  /* chart card */
+  .card{
+    background:var(--panel);
+    margin:8px 12px 0; border-radius:16px;
+    border:1px solid var(--divider);
+    padding:10px 10px 14px;
+  }
+  .y-axis-labels{
+    position:absolute; inset:auto 0 0 0;
+  }
+  canvas{ width:100%; height:280px; }
+
+  /* list row under chart */
+  .list{
+    margin:16px 12px 0; padding:16px;
+    border-top:1px solid var(--divider);
+    display:flex; align-items:center; gap:12px;
+  }
+  .dot{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--accent); flex:0 0 auto;
+  }
+  .row{
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; gap:12px;
+  }
+  .title{ font-size:17px; font-weight:700 }
+  .money{
+    font-variant-numeric: tabular-nums;
+    font-weight:700;
+  }
+  /* Editable appearance: looks normal; only shows subtle underline when focused */
+  [contenteditable="true"]{ outline:none }
+  [contenteditable="true"]:focus{ text-decoration:underline }
+
+  /* bottom nav */
+  .nav{
+    position:fixed; left:0; right:0; bottom:0;
+    background:var(--panel); border-top:1px solid var(--divider);
+    height:74px; display:flex; align-items:center; justify-content:space-around;
+  }
+  .tab{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    font-size:12px; color:var(--muted); text-decoration:none;
+  }
+  .tab svg{ width:22px; height:22px }
+  .tab.active{ color:var(--danger) }
+  .safe-bottom{ height:92px } /* keep content above iOS home indicator */
+</style>
+</head>
+<body>
+
+  <!-- Top -->
+  <div class="bar">
+    <div class="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1>Estimated revenue</h1>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters" id="rangeFilters">
+    <button class="btn" data-range="7">7D</button>
+    <button class="btn" data-range="28">28D</button>
+    <button class="btn" data-range="90">90D</button>
+    <button class="btn active" data-range="365">365D</button>
+    <span class="spacer"></span>
+    <button class="btn month-chip" id="curMonth">Aug</button>
+    <button class="btn month-chip" id="prevMonth">Jul</button>
+  </div>
+
+  <!-- Chart -->
+  <div class="card">
+    <canvas id="revChart" aria-label="Revenue chart" role="img"></canvas>
+  </div>
+
+  <!-- Row under chart -->
+  <div class="list">
+    <div class="dot"></div>
+    <div class="row">
+      <div class="title">Estimated revenue</div>
+      <!-- Make the money editable inline -->
+      <div class="money" id="totalRevenue" contenteditable="true" spellcheck="false" data-money>$97.74</div>
+    </div>
+  </div>
+
+  <div class="safe-bottom"></div>
+
+  <!-- Bottom nav -->
+  <nav class="nav" aria-label="Bottom">
+    <a class="tab" href="#">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 11h18M3 21h18M3 3h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a class="tab" href="#">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4zM10 9l6 3-6 3V9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>Content</span>
+    </a>
+    <a class="tab active" href="#">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 18V6m8 12V6m8 12V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Analytics</span>
+    </a>
+    <a class="tab" href="#">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 01-4 4h-4l-4 3v-3H7a4 4 0 01-4-4V6a4 4 0 014-4h10a4 4 0 014 4v9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>Comments</span>
+    </a>
+    <a class="tab" href="#">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12M6 6h12M6 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Earn</span>
+    </a>
+  </nav>
+
+<script>
+/* ---------- Utilities ---------- */
+const fmtMoney = (n) => {
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  return `${sign}$${abs.toFixed(2)}`;
+};
+const parseMoney = (str) => {
+  // pulls number from "$1,234.56" or "-$9.52"
+  const m = String(str).replace(/[^\d\.-]/g,'');
+  const n = Number(m);
+  return isNaN(n) ? 0 : n;
+};
+
+/* ---------- Month chips auto-update (changes every month) ---------- */
+(function updateMonthChips(){
+  const now = new Date();
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const m = now.getMonth();
+  const prev = (m+11)%12;
+  document.querySelector('#curMonth').textContent = monthNames[m];
+  document.querySelector('#prevMonth').textContent = monthNames[prev];
+})();
+
+/* ---------- Date labels for N days ending today ---------- */
+function buildDates(nDays){
+  const out = [];
+  const today = new Date();
+  for(let i=nDays-1;i>=0;i--){
+    const d = new Date(today);
+    d.setDate(today.getDate()-i);
+    out.push(d);
+  }
+  return out;
+}
+
+/* ---------- Random revenue series (with occasional dip/negatives) ---------- */
+function randomSeries(len){
+  const arr = [];
+  let y = 0;
+  for(let i=0;i<len;i++){
+    // drift gently upward, with rare sharp dips like the screenshot
+    const spike = Math.random()<0.05 ? - (3+Math.random()*10) : (Math.random()*1.5);
+    y += (0.2 + Math.random()*0.8) + spike*0.2;
+    // add some slight negatives to mimic quirky days
+    if(Math.random()<0.03) y = - (5 + Math.random()*10);
+    arr.push(Number(y.toFixed(2)));
+  }
+  // last point sometimes drops to zero like the screenshot
+  if(Math.random()<0.35) arr[arr.length-1] = 0;
+  return arr;
+}
+
+/* ---------- Chart ---------- */
+const ctx = document.getElementById('revChart').getContext('2d');
+let currentRange = 365; // default to 365D as requested
+
+function makeDataset(n){
+  const labels = buildDates(n).map(d => d); // keep Date objects for tooltip
+  const data = randomSeries(n);
+  return { labels, data };
+}
+
+let ds = makeDataset(currentRange);
+
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ds.labels,
+    datasets: [{
+      label: 'Estimated revenue',
+      data: ds.data,
+      fill: false,
+      borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
+      borderWidth: 2,
+      tension: 0.35,
+      pointRadius: 0,
+      pointHitRadius: 10,
+    }]
+  },
+  options: {
+    responsive:true,
+    maintainAspectRatio:false,
+    layout:{ padding:{ left: 8, right: 12, top: 20, bottom: 8 } },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.06)' },
+        ticks: {
+          color: '#9aa0a6',
+          callback: (val, idx, ticks) => {
+            // Show month abbreviations and occasional days like the screenshot
+            const d = chart.data.labels[idx];
+            const m = d.toLocaleString(undefined,{month:'short'});
+            const day = d.getDate();
+            // show Dec/Jan labels similar to screenshot feel
+            if(day===1 || idx===0) return `${m}`;
+            if(idx===ticks.length-1) return `${m}`;
+            return '';
+          }
+        }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.06)' },
+        ticks: {
+          color: '#9aa0a6',
+          callback: (v) => fmtMoney(v)
+        }
+      }
+    },
+    plugins: {
+      legend: { display:false },
+      tooltip: {
+        mode: 'nearest',
+        intersect: false,
+        callbacks: {
+          title: (items) => {
+            const d = items[0].raw !== undefined ? chart.data.labels[items[0].dataIndex] : new Date();
+            return d.toLocaleString(undefined,{month:'short', day:'numeric', year:'numeric'});
+          },
+          label: (ctx) => {
+            const v = Number(ctx.parsed.y||0);
+            return `${fmtMoney(v)}`;
+          }
+        }
+      }
+    }
+  }
+});
+
+/* Tap/click the chart to randomize the series */
+document.getElementById('revChart').addEventListener('click', () => {
+  const n = currentRange;
+  const next = makeDataset(n);
+  chart.data.labels = next.labels;
+  chart.data.datasets[0].data = next.data;
+  chart.update();
+});
+
+/* Range filters (7D / 28D / 90D / 365D) */
+document.getElementById('rangeFilters').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-range]');
+  if(!btn) return;
+  document.querySelectorAll('#rangeFilters .btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+
+  currentRange = Number(btn.dataset.range);
+  const next = makeDataset(currentRange);
+  chart.data.labels = next.labels;
+  chart.data.datasets[0].data = next.data;
+  chart.update();
+});
+
+/* ---------- Editable money fields ---------- */
+/* Any element with [data-money] is editable and will keep $ formatting */
+document.querySelectorAll('[data-money]').forEach(el=>{
+  el.addEventListener('focus', ()=> {
+    // show raw number while editing
+    const v = parseMoney(el.textContent);
+    el.textContent = v;
+  });
+  el.addEventListener('blur', ()=> {
+    const v = parseMoney(el.textContent);
+    el.textContent = fmtMoney(v);
+  });
+  el.addEventListener('keydown', (ev)=>{
+    if(ev.key==='Enter'){
+      ev.preventDefault();
+      ev.currentTarget.blur();
+    }
+  });
+});
+</script>
+</body>
+</html>
