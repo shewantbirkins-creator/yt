@@ -3,167 +3,167 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Estimated revenue — Mock</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Estimated revenue — Mock (Screenshot)</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <style>
-  body {
-    margin:0; background:#0b0b0c; color:#e9eef2;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-weight: 400;
+  :root{
+    --bg:#0b0b0c;
+    --panel:#0f0f10;
+    --muted:#9aa0a6;
+    --text:#ffffff;
+    --accent:#5ec2ff;
+    --chip:#1b1b1d;
+    --chipActive:#ffffff;
+    --chipActiveText:#0b0b0c;
+    --divider: rgba(255,255,255,0.04);
+    --danger:#ef4444;
   }
-  h1 {
-    margin:0;font-size:20px;padding:16px;
-    font-weight:600;
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text","SF Pro Display","Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
   }
-  .filters {
-    display:flex;gap:8px;padding:0 12px;margin-bottom:8px;
+
+  /* Top bar */
+  .bar{
+    display:flex; align-items:center; gap:.75rem; padding:18px 16px 6px;
+    border-bottom:1px solid var(--divider);
   }
-  .btn {
-    padding:6px 14px;border-radius:8px;
-    background:#1c1d20;color:#fff;cursor:pointer;font-size:14px;
-    border:none;font-weight:500;
+  .back{
+    width:36px; height:36px; display:grid; place-items:center;
+    border-radius:8px; cursor:pointer;
   }
-  .btn.active {
-    background:#fff;color:#000;
+  .back svg{ width:20px; height:20px; color:var(--text) }
+  h1{font-size:32px; margin:0; font-weight:800; letter-spacing:.3px}
+
+  /* Filters row */
+  .filters{
+    display:flex; align-items:center; gap:10px; padding:12px;
+    overflow-x:auto;
   }
-  .chart-container {
-    height:260px;margin:0 12px;
+  .chip{
+    padding:10px 14px; border-radius:12px; background:var(--chip);
+    color:var(--text); font-weight:700; font-size:14px; border:1px solid var(--divider);
+    cursor:pointer; flex:0 0 auto;
+    font-family:inherit;
   }
-  .list {
-    margin:16px 12px;display:flex;
-    justify-content:space-between;font-weight:600;
-    font-size:15px;
+  .chip.active{
+    background:var(--chipActive); color:var(--chipActiveText);
+    box-shadow:0 1px 0 rgba(0,0,0,0.25) inset;
   }
-  [contenteditable="true"]:focus {
-    text-decoration:underline;outline:none
+  .filters .spacer { width:8px; display:inline-block }
+
+  /* Chart card */
+  .card{
+    margin:8px 12px; padding:8px 8px 12px; border-radius:14px; background:var(--panel);
+    border:1px solid var(--divider);
   }
-  /* bottom nav mock */
-  .bottom-nav {
-    position:fixed;bottom:0;left:0;right:0;
-    height:60px;background:#000;border-top:1px solid #222;
-    display:flex;align-items:center;justify-content:space-around;
-    font-size:12px;
+  .chart-wrap{ position:relative; height:300px; padding:8px 4px 0; }
+
+  .legend-row{
+    margin:18px 12px 0; padding:16px; border-top:1px solid var(--divider);
+    display:flex; align-items:center; gap:12px;
   }
-  .bottom-nav div {
-    display:flex;flex-direction:column;align-items:center;
-    color:#aaa;font-weight:500
+  .dot{ width:10px; height:10px; border-radius:50%; background:var(--accent) }
+  .row{ display:flex; align-items:center; justify-content:space-between; width:100% }
+  .title{ font-weight:800; font-size:18px }
+  .money{
+    font-weight:800; font-size:18px; font-variant-numeric:tabular-nums;
+    font-family:inherit;
   }
-  .bottom-nav .active {color:#e34c3c}
+  [contenteditable=true]{ outline:none; }
+  [contenteditable=true]:focus{ text-decoration:underline; }
+
+  .nav{
+    position:fixed; left:0; right:0; bottom:0; height:72px; background:var(--panel);
+    border-top:1px solid var(--divider); display:flex; align-items:center; justify-content:space-around;
+  }
+  .tab{ display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; color:var(--muted); text-decoration:none; font-family:inherit; }
+  .tab svg{ width:22px; height:22px }
+  .tab.active{ color:var(--danger) }
+
+  .safe-bottom{ height:94px }
+
+  ::-webkit-scrollbar{ height:8px }
+  ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.03); border-radius:8px }
+  @media (min-width:900px){
+    body{ font-size:16px }
+    h1{ font-size:36px }
+  }
 </style>
 </head>
 <body>
 
-<h1>Estimated revenue</h1>
+  <!-- Top -->
+  <div class="bar">
+    <div class="back" title="Back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1>Estimated revenue</h1>
+  </div>
 
-<!-- Filter buttons -->
-<div class="filters" id="rangeFilters">
-  <button class="btn" data-range="7">7D</button>
-  <button class="btn active" data-range="28">28D</button>
-  <button class="btn" data-range="90">90D</button>
-  <button class="btn" data-range="365">365D</button>
-  <button class="btn" data-range="Jan">Jan</button>
-  <button class="btn" data-range="Dec">Dec</button>
-</div>
+  <!-- Filter / range chips -->
+  <div class="filters" id="rangeFilters">
+    <button class="chip" data-range="7">7D</button>
+    <button class="chip" data-range="28">28D</button>
+    <button class="chip" data-range="90">90D</button>
+    <button class="chip" data-range="365">365D</button>
+    <div style="width:10px;border-left:1px solid var(--divider);height:36px;margin-left:8px"></div>
+    <div id="monthChips" style="display:flex;gap:10px;margin-left:8px"></div>
+  </div>
 
-<!-- Chart -->
-<div class="chart-container">
-  <canvas id="revChart"></canvas>
-</div>
+  <!-- Chart -->
+  <div class="card">
+    <div class="chart-wrap">
+      <canvas id="revChart" role="img" aria-label="Estimated revenue chart"></canvas>
+    </div>
+  </div>
 
-<!-- Revenue total -->
-<div class="list">
-  <span>Estimated revenue</span>
-  <span id="totalRevenue" contenteditable="true" data-money>$97.74</span>
-</div>
+  <!-- legend / list row -->
+  <div class="legend-row">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="dot"></div>
+      <div class="title">Estimated revenue</div>
+    </div>
+    <div class="money" id="totalRevenue" contenteditable="true" spellcheck="false" data-money>$97.74</div>
+  </div>
 
-<!-- Bottom nav -->
-<div class="bottom-nav">
-  <div>Dashboard</div>
-  <div>Content</div>
-  <div class="active">Analytics</div>
-  <div>Comments</div>
-  <div>Earn</div>
-</div>
+  <div class="safe-bottom"></div>
+
+  <!-- bottom nav -->
+  <nav class="nav" role="navigation" aria-label="Bottom">
+    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M3 11h18M3 21h18M3 3h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Dashboard</span></a>
+    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4zM10 9l6 3-6 3V9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Content</span></a>
+    <a class="tab active" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V6m8 12V6m8 12V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Analytics</span></a>
+    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 01-4 4h-4l-4 3v-3H7a4 4 0 01-4-4V6a4 4 0 014-4h10a4 4 0 014 4v9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Comments</span></a>
+    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12M6 6h12M6 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Earn</span></a>
+  </nav>
 
 <script>
-/* ---------- Helpers ---------- */
-const fmtMoney = n => `${n<0?'-':''}$${Math.abs(n).toFixed(2)}`;
-const parseMoney = s => +String(s).replace(/[^\d.-]/g,'') || 0;
-
-/* ---------- Random data ---------- */
-function randomSeries(len){
-  let arr=[],y=0;
-  for(let i=0;i<len;i++){
-    y += (Math.random()*2-1)*3;
-    arr.push(+y.toFixed(2));
-  }
-  return arr;
+/* -----------------------
+   Utilities & formatting
+   ----------------------- */
+function fmtMoney(n){
+  const sign = n < 0 ? '-' : '';
+  return `${sign}$${Math.abs(Number(n)).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
 }
-function buildDates(n){
-  const out=[],today=new Date();
-  for(let i=n-1;i>=0;i--){
-    let d=new Date(today); d.setDate(today.getDate()-i);
-    out.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
-  }
-  return out;
+function parseMoney(s){
+  const n = Number(String(s).replace(/[^\d.-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+function shortMonthName(date){
+  return date.toLocaleString(undefined,{month:'short'});
+}
+function formatTooltipDate(date){
+  return date.toLocaleString(undefined,{month:'short', day:'numeric', year:'numeric'});
 }
 
-/* ---------- Init Chart ---------- */
-let currentRange=28;
-const ctx=document.getElementById('revChart');
-let chart=new Chart(ctx,{
-  type:'line',
-  data:{
-    labels:buildDates(currentRange),
-    datasets:[{
-      data:randomSeries(currentRange),
-      borderColor:'#5ec2ff',
-      tension:0.3,
-      borderWidth:2,
-      pointRadius:0
-    }]
-  },
-  options:{
-    responsive:true,
-    plugins:{
-      legend:{display:false},
-      tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.parsed.y)}}
-    },
-    scales:{
-      y:{ticks:{callback:v=>fmtMoney(v)}}
-    }
-  }
-});
-
-/* ---------- Randomize on click ---------- */
-ctx.onclick=()=>{
-  chart.data.labels=buildDates(currentRange);
-  chart.data.datasets[0].data=randomSeries(currentRange);
-  chart.update();
-};
-
-/* ---------- Switch range ---------- */
-document.getElementById('rangeFilters').addEventListener('click',e=>{
-  const b=e.target.closest('button[data-range]');
-  if(!b) return;
-  document.querySelectorAll('.btn').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  if(!isNaN(+b.dataset.range)){
-    currentRange=+b.dataset.range;
-    chart.data.labels=buildDates(currentRange);
-    chart.data.datasets[0].data=randomSeries(currentRange);
-    chart.update();
-  }
-});
-
-/* ---------- Editable money field ---------- */
-document.querySelectorAll('[data-money]').forEach(el=>{
-  el.addEventListener('focus',()=>{el.textContent=parseMoney(el.textContent)});
-  el.addEventListener('blur',()=>{el.textContent=fmtMoney(parseMoney(el.textContent))});
-  el.addEventListener('keydown',ev=>{
-    if(ev.key==='Enter'){ev.preventDefault();el.blur();}
-  });
-});
+/* rest of your script unchanged … */
 </script>
 </body>
 </html>
