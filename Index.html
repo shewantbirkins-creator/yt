@@ -4,218 +4,127 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Estimated revenue — Mock</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  :root{
-    --bg:#0b0b0c; --panel:#111214; --text:#e9eef2; --muted:#9aa0a6;
-    --chip:#1c1d20; --chipActive:#2a2c31; --divider:#232427;
-    --accent:#5ec2ff; --alert:#ef4444;
+  body {
+    margin:0; background:#0b0b0c; color:#e9eef2;
+    font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial;
   }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text","Segoe UI",Roboto,Helvetica,Arial;
-    background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  h1{margin:0;font-size:24px;padding:16px}
+  .filters{display:flex;gap:8px;padding:0 12px}
+  .btn{
+    padding:6px 10px;border-radius:6px;
+    background:#1c1d20;color:#fff;cursor:pointer;font-size:14px;
+    border:none;
   }
-  .bar{display:flex;align-items:center;gap:.75rem;padding:18px 16px 8px}
-  .back{width:24px;height:24px;border-radius:8px;display:grid;place-items:center}
-  .back svg{width:20px;height:20px}
-  h1{font-size:28px;font-weight:700;letter-spacing:.2px;margin:0}
-
-  .filters{display:flex;gap:10px;flex-wrap:wrap;padding:10px 12px 0}
-  .btn{padding:10px 14px;border-radius:12px;border:1px solid var(--divider);background:var(--chip);
-       color:var(--text);font-size:14px;font-weight:600;letter-spacing:.25px;cursor:pointer}
-  .btn.active{background:var(--chipActive)}
-  .spacer{flex:1}
-  .month-chip{min-width:64px;text-align:center}
-
-  .card{background:var(--panel);margin:8px 12px 0;border-radius:16px;border:1px solid var(--divider);padding:10px 10px 14px}
-  canvas{width:100%;height:280px}
-
-  .list{margin:16px 12px 0;padding:16px;border-top:1px solid var(--divider);display:flex;align-items:center;gap:12px}
-  .dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
-  .row{display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px}
-  .title{font-size:17px;font-weight:700}
-  .money{font-variant-numeric:tabular-nums;font-weight:700}
-  [contenteditable="true"]{outline:none}
-  [contenteditable="true"]:focus{text-decoration:underline}
-
-  .nav{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--divider);
-       height:74px;display:flex;align-items:center;justify-content:space-around}
-  .tab{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);text-decoration:none}
-  .tab svg{width:22px;height:22px}
-  .tab.active{color:var(--alert)}
-  .safe-bottom{height:92px}
+  .btn.active{background:#2a2c31}
+  .chart-container{height:280px;margin:12px}
+  .list{
+    margin:16px 12px;display:flex;
+    justify-content:space-between;font-weight:bold
+  }
+  [contenteditable="true"]:focus{text-decoration:underline;outline:none}
 </style>
 </head>
 <body>
-  <div class="bar">
-    <div class="back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <h1>Estimated revenue</h1>
-  </div>
 
-  <div class="filters" id="rangeFilters">
-    <button class="btn" data-range="7">7D</button>
-    <button class="btn" data-range="28">28D</button>
-    <button class="btn" data-range="90">90D</button>
-    <button class="btn active" data-range="365">365D</button>
-    <span class="spacer"></span>
-    <button class="btn month-chip" id="curMonth">Aug</button>
-    <button class="btn month-chip" id="prevMonth">Jul</button>
-  </div>
+<h1>Estimated revenue</h1>
 
-  <div class="card"><canvas id="revChart" aria-label="Revenue chart" role="img"></canvas></div>
+<!-- Filter buttons -->
+<div class="filters" id="rangeFilters">
+  <button class="btn" data-range="7">7D</button>
+  <button class="btn" data-range="28">28D</button>
+  <button class="btn" data-range="90">90D</button>
+  <button class="btn active" data-range="365">365D</button>
+</div>
 
-  <div class="list">
-    <div class="dot"></div>
-    <div class="row">
-      <div class="title">Estimated revenue</div>
-      <div class="money" id="totalRevenue" contenteditable="true" spellcheck="false" data-money>$97.74</div>
-    </div>
-  </div>
+<!-- Chart -->
+<div class="chart-container">
+  <canvas id="revChart"></canvas>
+</div>
 
-  <div class="safe-bottom"></div>
-
-  <nav class="nav" aria-label="Bottom">
-    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M3 11h18M3 21h18M3 3h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Dashboard</span></a>
-    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4zM10 9l6 3-6 3V9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Content</span></a>
-    <a class="tab active" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V6m8 12V6m8 12V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Analytics</span></a>
-    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 01-4 4h-4l-4 3v-3H7a4 4 0 01-4-4V6a4 4 0 014-4h10a4 4 0 014 4v9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Comments</span></a>
-    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12M6 6h12M6 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Earn</span></a>
-  </nav>
+<!-- Revenue total -->
+<div class="list">
+  <span>Estimated revenue</span>
+  <span id="totalRevenue" contenteditable="true" data-money>$97.74</span>
+</div>
 
 <script>
-/* ---------- Money utils ---------- */
-const fmtMoney = (n) => `${n<0?'-':''}$${Math.abs(n).toFixed(2)}`;
-const parseMoney = (s) => { const n = +String(s).replace(/[^\d.-]/g,''); return isNaN(n)?0:n };
+/* ---------- Helpers ---------- */
+const fmtMoney = n => `${n<0?'-':''}$${Math.abs(n).toFixed(2)}`;
+const parseMoney = s => +String(s).replace(/[^\d.-]/g,'') || 0;
 
-/* ---------- Month chips: always current + previous month ---------- */
-(function(){
-  const now = new Date();
-  const names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  document.getElementById('curMonth').textContent  = names[now.getMonth()];
-  document.getElementById('prevMonth').textContent = names[(now.getMonth()+11)%12];
-})();
-
-/* ---------- Data helpers ---------- */
-function buildDates(n){
-  const out=[]; const today=new Date();
-  for(let i=n-1;i>=0;i--){ const d=new Date(today); d.setDate(today.getDate()-i); out.push(d); }
-  return out;
-}
+/* ---------- Build random data ---------- */
 function randomSeries(len){
-  const arr=[]; let y=0;
+  let arr=[],y=0;
   for(let i=0;i<len;i++){
-    // gentle drift with rare sharp dips like the screenshot
-    const drift = 0.1 + Math.random()*0.4;
-    const shock = Math.random()<0.06 ? -(4+Math.random()*12) : 0;
-    y += drift + shock*0.25;
-    if(Math.random()<0.035) y = -(5+Math.random()*10);        // occasional negative day
-    // clamp to match the screenshot axis exactly
-    y = Math.max(-18.8, Math.min(9.4, y));
+    y += (Math.random()*2-1)*3; // random walk
     arr.push(+y.toFixed(2));
   }
-  if(Math.random()<0.35) arr[arr.length-1]=0; // last point drop to 0 sometimes
   return arr;
 }
+function buildDates(n){
+  const out=[],today=new Date();
+  for(let i=n-1;i>=0;i--){
+    let d=new Date(today); d.setDate(today.getDate()-i);
+    out.push(d.toLocaleDateString());
+  }
+  return out;
+}
 
-/* ---------- Chart ---------- */
-const ctx = document.getElementById('revChart').getContext('2d');
-let currentRange = 365; // 365D selected by default
-function makeDataset(n){ return {labels:buildDates(n), data:randomSeries(n)} }
-let ds = makeDataset(currentRange);
-
-const axisMax = 9.40, axisMin = -18.80, axisStep = 9.40;
-
-const chart = new Chart(ctx, {
+/* ---------- Init Chart ---------- */
+let currentRange=365;
+const ctx=document.getElementById('revChart');
+let chart=new Chart(ctx,{
   type:'line',
   data:{
-    labels: ds.labels,
+    labels:buildDates(currentRange),
     datasets:[{
-      label:'Estimated revenue',
-      data: ds.data,
-      borderColor:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
-      borderWidth:2, tension:0.35, fill:false, pointRadius:0, pointHitRadius:10
+      data:randomSeries(currentRange),
+      borderColor:'#5ec2ff',
+      tension:0.3,
+      borderWidth:2,
+      pointRadius:0
     }]
   },
   options:{
-    responsive:true, maintainAspectRatio:false,
-    layout:{padding:{left:8,right:12,top:20,bottom:8}},
-    scales:{
-      x:{
-        grid:{color:'rgba(255,255,255,0.06)'},
-        ticks:{
-          color:'#9aa0a6',
-          callback:(v, i, ticks)=>{
-            const d = chart.data.labels[i];
-            // Show occasional date ticks like the screenshot
-            const day = d.getDate();
-            const mon = d.toLocaleString(undefined,{month:'short'});
-            if(day===1 || i===0) return `${mon}`;
-            if(i===ticks.length-1) return `${mon}`;
-            if(currentRange<=31 && (i%9===0)) return `${mon} ${String(day).padStart(2,'0')}`;
-            return '';
-          }
-        }
-      },
-      y:{
-        min:axisMin, max:axisMax,
-        grid:{color:'rgba(255,255,255,0.06)'},
-        ticks:{
-          color:'#9aa0a6', stepSize:axisStep,
-          callback:(v)=>fmtMoney(v)
-        }
-      }
-    },
+    responsive:true,
     plugins:{
       legend:{display:false},
-      tooltip:{
-        mode:'nearest', intersect:false,
-        callbacks:{
-          title:(items)=>{
-            const d = chart.data.labels[items[0].dataIndex];
-            return d.toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric'});
-          },
-          label:(ctx)=>fmtMoney(ctx.parsed.y),
-          afterLabel:()=>'' // keep single line
-        },
-        displayColors:false,
-        callbacks: {
-          label: (ctx) => `${fmtMoney(ctx.parsed.y)}`
-        }
-      }
+      tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.parsed.y)}}
+    },
+    scales:{
+      y:{ticks:{callback:v=>fmtMoney(v)}}
     }
   }
 });
 
-/* Tap/click → randomize series */
-document.getElementById('revChart').addEventListener('click', ()=>{
-  const next = makeDataset(currentRange);
-  chart.data.labels = next.labels;
-  chart.data.datasets[0].data = next.data;
+/* ---------- Randomize on click ---------- */
+ctx.onclick=()=>{
+  chart.data.labels=buildDates(currentRange);
+  chart.data.datasets[0].data=randomSeries(currentRange);
   chart.update();
-});
+};
 
-/* Range chips */
-document.getElementById('rangeFilters').addEventListener('click',(e)=>{
-  const b = e.target.closest('button[data-range]'); if(!b) return;
-  document.querySelectorAll('#rangeFilters .btn').forEach(x=>x.classList.remove('active'));
+/* ---------- Switch range ---------- */
+document.getElementById('rangeFilters').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-range]');
+  if(!b) return;
+  document.querySelectorAll('.btn').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');
-  currentRange = +b.dataset.range;
-  const next = makeDataset(currentRange);
-  chart.data.labels = next.labels;
-  chart.data.datasets[0].data = next.data;
+  currentRange=+b.dataset.range;
+  chart.data.labels=buildDates(currentRange);
+  chart.data.datasets[0].data=randomSeries(currentRange);
   chart.update();
 });
 
-/* Editable money fields: keep $ formatting */
+/* ---------- Editable money field ---------- */
 document.querySelectorAll('[data-money]').forEach(el=>{
-  el.addEventListener('focus',()=>{ el.textContent = parseMoney(el.textContent) });
-  el.addEventListener('blur',()=>{ el.textContent = fmtMoney(parseMoney(el.textContent)) });
-  el.addEventListener('keydown',(ev)=>{ if(ev.key==='Enter'){ ev.preventDefault(); el.blur(); } });
+  el.addEventListener('focus',()=>{el.textContent=parseMoney(el.textContent)});
+  el.addEventListener('blur',()=>{el.textContent=fmtMoney(parseMoney(el.textContent))});
+  el.addEventListener('keydown',ev=>{
+    if(ev.key==='Enter'){ev.preventDefault();el.blur();}
+  });
 });
 </script>
 </body>
