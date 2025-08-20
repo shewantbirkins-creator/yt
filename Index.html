@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Estimated revenue — Mock (Screenshot)</title>
+<title>Estimated revenue — Mock</title>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -21,133 +21,92 @@
     --divider: rgba(255,255,255,0.04);
     --danger:#ef4444;
   }
+  @font-face {
+    font-family: 'SF Pro Text';
+    src: local("SF Pro Text"), local("SF Pro Display"),
+         local("-apple-system"), local("BlinkMacSystemFont");
+    font-weight: 300 900;
+    font-display: swap;
+  }
   *{box-sizing:border-box}
-  html,body{height:100%}
   body{
     margin:0; background:var(--bg); color:var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text","SF Pro Display","Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
   }
 
   /* Top bar */
-  .bar{
-    display:flex; align-items:center; gap:.75rem; padding:18px 16px 6px;
-    border-bottom:1px solid var(--divider);
-  }
-  .back{
-    width:36px; height:36px; display:grid; place-items:center;
-    border-radius:8px; cursor:pointer;
-  }
-  .back svg{ width:20px; height:20px; color:var(--text) }
-  h1{font-size:32px; margin:0; font-weight:800; letter-spacing:.3px}
+  .bar{display:flex;align-items:center;gap:.75rem;padding:18px 16px 6px;border-bottom:1px solid var(--divider)}
+  .back{width:36px;height:36px;display:grid;place-items:center;border-radius:8px;cursor:pointer}
+  .back svg{width:20px;height:20px;color:var(--text)}
+  h1{font-size:32px;margin:0;font-weight:800;letter-spacing:.3px}
 
-  /* Filters row */
-  .filters{
-    display:flex; align-items:center; gap:10px; padding:12px;
-    overflow-x:auto;
-  }
-  .chip{
-    padding:10px 14px; border-radius:12px; background:var(--chip);
-    color:var(--text); font-weight:700; font-size:14px; border:1px solid var(--divider);
-    cursor:pointer; flex:0 0 auto;
-    font-family:inherit;
-  }
-  .chip.active{
-    background:var(--chipActive); color:var(--chipActiveText);
-    box-shadow:0 1px 0 rgba(0,0,0,0.25) inset;
-  }
-  .filters .spacer { width:8px; display:inline-block }
+  /* Filters */
+  .filters{display:flex;align-items:center;gap:10px;padding:12px;overflow-x:auto}
+  .chip{padding:10px 14px;border-radius:12px;background:var(--chip);color:var(--text);
+    font-weight:700;font-size:14px;border:1px solid var(--divider);cursor:pointer;flex:0 0 auto}
+  .chip.active{background:var(--chipActive);color:var(--chipActiveText);box-shadow:0 1px 0 rgba(0,0,0,0.25) inset}
 
   /* Chart card */
-  .card{
-    margin:8px 12px; padding:8px 8px 12px; border-radius:14px; background:var(--panel);
-    border:1px solid var(--divider);
-  }
-  .chart-wrap{ position:relative; height:300px; padding:8px 4px 0; }
+  .card{margin:8px 12px;padding:8px 8px 12px;border-radius:14px;background:var(--panel);border:1px solid var(--divider)}
+  .chart-wrap{position:relative;height:300px;padding:8px 4px 0}
 
-  .legend-row{
-    margin:18px 12px 0; padding:16px; border-top:1px solid var(--divider);
-    display:flex; align-items:center; gap:12px;
-  }
-  .dot{ width:10px; height:10px; border-radius:50%; background:var(--accent) }
-  .row{ display:flex; align-items:center; justify-content:space-between; width:100% }
-  .title{ font-weight:800; font-size:18px }
-  .money{
-    font-weight:800; font-size:18px; font-variant-numeric:tabular-nums;
-    font-family:inherit;
-  }
-  [contenteditable=true]{ outline:none; }
-  [contenteditable=true]:focus{ text-decoration:underline; }
+  .legend-row{margin:18px 12px 0;padding:16px;border-top:1px solid var(--divider);display:flex;align-items:center;gap:12px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+  .row{display:flex;align-items:center;justify-content:space-between;width:100%}
+  .title{font-weight:800;font-size:18px}
+  .money{font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+  [contenteditable=true]{outline:none}
+  [contenteditable=true]:focus{text-decoration:underline}
 
-  .nav{
-    position:fixed; left:0; right:0; bottom:0; height:72px; background:var(--panel);
-    border-top:1px solid var(--divider); display:flex; align-items:center; justify-content:space-around;
-  }
-  .tab{ display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; color:var(--muted); text-decoration:none; font-family:inherit; }
-  .tab svg{ width:22px; height:22px }
-  .tab.active{ color:var(--danger) }
-
-  .safe-bottom{ height:94px }
-
-  ::-webkit-scrollbar{ height:8px }
-  ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.03); border-radius:8px }
-  @media (min-width:900px){
-    body{ font-size:16px }
-    h1{ font-size:36px }
-  }
+  /* Bottom nav */
+  .nav{position:fixed;left:0;right:0;bottom:0;height:72px;background:var(--panel);
+    border-top:1px solid var(--divider);display:flex;align-items:center;justify-content:space-around}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);text-decoration:none}
+  .tab svg{width:22px;height:22px}
+  .tab.active{color:var(--danger)}
+  .safe-bottom{height:94px}
 </style>
 </head>
 <body>
 
-  <!-- Top -->
-  <div class="bar">
-    <div class="back" title="Back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <h1>Estimated revenue</h1>
+<div class="bar">
+  <div class="back"><svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <h1>Estimated revenue</h1>
+</div>
+
+<div class="filters" id="rangeFilters">
+  <button class="chip" data-range="7">7D</button>
+  <button class="chip" data-range="28">28D</button>
+  <button class="chip" data-range="90">90D</button>
+  <button class="chip" data-range="365">365D</button>
+</div>
+
+<div class="card">
+  <div class="chart-wrap">
+    <canvas id="revChart"></canvas>
   </div>
+</div>
 
-  <!-- Filter / range chips -->
-  <div class="filters" id="rangeFilters">
-    <button class="chip" data-range="7">7D</button>
-    <button class="chip" data-range="28">28D</button>
-    <button class="chip" data-range="90">90D</button>
-    <button class="chip" data-range="365">365D</button>
-    <div style="width:10px;border-left:1px solid var(--divider);height:36px;margin-left:8px"></div>
-    <div id="monthChips" style="display:flex;gap:10px;margin-left:8px"></div>
+<div class="legend-row">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="dot"></div>
+    <div class="title">Estimated revenue</div>
   </div>
+  <div class="money" id="totalRevenue" contenteditable="true" data-money>$97.74</div>
+</div>
 
-  <!-- Chart -->
-  <div class="card">
-    <div class="chart-wrap">
-      <canvas id="revChart" role="img" aria-label="Estimated revenue chart"></canvas>
-    </div>
-  </div>
+<div class="safe-bottom"></div>
 
-  <!-- legend / list row -->
-  <div class="legend-row">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div class="dot"></div>
-      <div class="title">Estimated revenue</div>
-    </div>
-    <div class="money" id="totalRevenue" contenteditable="true" spellcheck="false" data-money>$97.74</div>
-  </div>
-
-  <div class="safe-bottom"></div>
-
-  <!-- bottom nav -->
-  <nav class="nav" role="navigation" aria-label="Bottom">
-    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M3 11h18M3 21h18M3 3h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Dashboard</span></a>
-    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4zM10 9l6 3-6 3V9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Content</span></a>
-    <a class="tab active" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V6m8 12V6m8 12V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Analytics</span></a>
-    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 01-4 4h-4l-4 3v-3H7a4 4 0 01-4-4V6a4 4 0 014-4h10a4 4 0 014 4v9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Comments</span></a>
-    <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12M6 6h12M6 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Earn</span></a>
-  </nav>
+<nav class="nav">
+  <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M3 11h18M3 21h18M3 3h18" stroke="currentColor" stroke-width="2"/></svg><span>Dashboard</span></a>
+  <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4zM10 9l6 3-6 3V9z" stroke="currentColor" stroke-width="2"/></svg><span>Content</span></a>
+  <a class="tab active" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V6m8 12V6m8 12V6" stroke="currentColor" stroke-width="2"/></svg><span>Analytics</span></a>
+  <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 01-4 4h-4l-4 3v-3H7a4 4 0 01-4-4V6a4 4 0 014-4h10a4 4 0 014 4v9z" stroke="currentColor" stroke-width="2"/></svg><span>Comments</span></a>
+  <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12M6 6h12M6 18h12" stroke="currentColor" stroke-width="2"/></svg><span>Earn</span></a>
+</nav>
 
 <script>
-/* -----------------------
-   Utilities & formatting
-   ----------------------- */
 function fmtMoney(n){
   const sign = n < 0 ? '-' : '';
   return `${sign}$${Math.abs(Number(n)).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
@@ -156,14 +115,64 @@ function parseMoney(s){
   const n = Number(String(s).replace(/[^\d.-]/g,''));
   return isNaN(n) ? 0 : n;
 }
-function shortMonthName(date){
-  return date.toLocaleString(undefined,{month:'short'});
-}
-function formatTooltipDate(date){
-  return date.toLocaleString(undefined,{month:'short', day:'numeric', year:'numeric'});
+
+// Generate fake revenue data
+function genData(days=30){
+  let data=[], labels=[];
+  let today=new Date();
+  for(let i=days-1;i>=0;i--){
+    let d=new Date(today); d.setDate(d.getDate()-i);
+    labels.push(d.toLocaleDateString(undefined,{month:'short', day:'numeric'}));
+    data.push(Math.round(Math.random()*200+50));
+  }
+  return {labels, data};
 }
 
-/* rest of your script unchanged … */
+let ctx=document.getElementById('revChart');
+let {labels, data}=genData(30);
+
+let chart=new Chart(ctx,{
+  type:'line',
+  data:{labels,datasets:[{
+    data,
+    borderColor:'#5ec2ff',
+    backgroundColor:'rgba(94,194,255,0.1)',
+    tension:0.35,
+    fill:true,
+    pointRadius:0,
+    borderWidth:2
+  }]},
+  options:{
+    responsive:true,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        callbacks:{
+          label: (ctx)=> fmtMoney(ctx.parsed.y)
+        }
+      }
+    },
+    scales:{
+      x:{grid:{display:false}},
+      y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{callback:(v)=>'$'+v}}
+    }
+  }
+});
+
+// Clicking chart randomizes data
+ctx.onclick=()=>{
+  let {labels,data}=genData(30);
+  chart.data.labels=labels;
+  chart.data.datasets[0].data=data;
+  chart.update();
+};
+
+// Editable total revenue
+const totalEl=document.getElementById('totalRevenue');
+totalEl.addEventListener('blur',()=>{
+  let val=parseMoney(totalEl.textContent);
+  totalEl.textContent=fmtMoney(val);
+});
 </script>
 </body>
 </html>
