@@ -169,9 +169,20 @@ ctx.onclick=()=>{
 
 // Editable total revenue
 const totalEl=document.getElementById('totalRevenue');
+
+// Load saved value from localStorage
+window.addEventListener('DOMContentLoaded',()=>{
+  let saved=localStorage.getItem('totalRevenue');
+  if(saved){
+    totalEl.textContent=saved;
+  }
+});
+
+// Save on blur
 totalEl.addEventListener('blur',()=>{
   let val=parseMoney(totalEl.textContent);
   totalEl.textContent=fmtMoney(val);
+  localStorage.setItem('totalRevenue', totalEl.textContent);
 });
 </script>
 </body>
